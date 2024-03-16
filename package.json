@@ -1,7 +1,7 @@
 {
   "name": "@rbxts/finite-state-machine-2",
   "version": "1.0.11",
-  "description": "Expands on the simple Finite State Machine written by Bytebit by adding guard statements, callback and state data storing. Written for roblox-ts.",
+  "description": "Expands on the simple Finite State Machine written by Bytebit by adding guard statements and state data storing. Written for roblox-ts.",
   "main": "out/init.lua",
   "scripts": {
     "build": "rbxtsc",
