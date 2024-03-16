@@ -3,6 +3,13 @@ import { IReadOnlySignal, ISignal } from "@rbxts/signals-tooling";
 import { SignalFactory } from "factories/SignalFactory";
 import { IReadonlyFiniteStateMachine } from "interfaces/IReadonlyFiniteStateMachine";
 
+type GuardType = () => boolean;
+
+type TransitionData<StateType> = {
+	state: StateType;
+	guard: GuardType;
+};
+
 function convertTupleKeysToNestedMap<K1, K2, V>(
 	tupleKeysMap: ReadonlyMap<[K1, K2], V>,
 ): ReadonlyMap<K1, ReadonlyMap<K2, V>> {
@@ -19,8 +26,8 @@ function convertTupleKeysToNestedMap<K1, K2, V>(
 	return tupleKeysLookUpMap;
 }
 
-export class FiniteStateMachine<StateType extends defined, EventType extends defined>
-	implements IReadonlyFiniteStateMachine<StateType, EventType>
+export class FiniteStateMachine<StateType extends defined, EventType extends defined, Data extends defined>
+	implements IReadonlyFiniteStateMachine<StateType, EventType, Data>
 {
 	public readonly stateChanged: IReadOnlySignal<(newState: StateType, oldState: StateType, event: EventType) => void>;
 
@@ -29,12 +36,16 @@ export class FiniteStateMachine<StateType extends defined, EventType extends def
 	private readonly stateChangedFireable: ISignal<
 		(newState: StateType, oldState: StateType, event: EventType) => void
 	>;
-	private readonly stateTransitions: ReadonlyMap<StateType, ReadonlyMap<EventType, StateType>>;
+	private readonly stateTransitions: ReadonlyMap<StateType, ReadonlyMap<EventType, TransitionData<StateType>>>;
+
+	private currentState: StateType;
+	private currentStateData: Data;
 
 	protected constructor(
-		private currentState: StateType,
+		initialState: StateType,
 		signalFactory: SignalFactory,
-		tupleKeyStateTransitions: ReadonlyMap<[StateType, EventType], StateType>,
+		tupleKeyStateTransitions: ReadonlyMap<[StateType, EventType], TransitionData<StateType>>,
+		private stateData: ReadonlyMap<StateType, Data>,
 	) {
 		this.bin = new Bin();
 		this.stateTransitions = convertTupleKeysToNestedMap(tupleKeyStateTransitions);
@@ -44,13 +55,22 @@ export class FiniteStateMachine<StateType extends defined, EventType extends def
 
 		this.bin.add(this.stateChangedFireable);
 		this.bin.add(() => (this.isDestroyed = true));
+
+		this.currentState = initialState;
+		this.currentStateData = stateData.get(initialState)!;
 	}
 
-	public static create<StateType extends defined, EventType extends defined>(
+	public static create<
+		StateType extends defined,
+		EventType extends defined,
+		GuardType extends defined,
+		Data extends defined,
+	>(
 		initialState: StateType,
-		stateTransitions: ReadonlyMap<[StateType, EventType], StateType>,
+		stateTransitions: ReadonlyMap<[StateType, EventType], TransitionData<StateType>>,
+		stateData: ReadonlyMap<StateType, Data>,
 	) {
-		return new FiniteStateMachine(initialState, new SignalFactory(), stateTransitions);
+		return new FiniteStateMachine(initialState, new SignalFactory(), stateTransitions, stateData);
 	}
 
 	public destroy() {
@@ -67,6 +87,18 @@ export class FiniteStateMachine<StateType extends defined, EventType extends def
 		return this.currentState;
 	}
 
+	public getCurrentStateData(): Data {
+		this.assertIsNotDestroyed();
+
+		return this.currentStateData;
+	}
+
+	public updateCurrentStateData(newData: Data) {
+		this.assertIsNotDestroyed();
+
+		this.currentStateData = newData;
+	}
+
 	public handleEvent(event: EventType) {
 		this.assertIsNotDestroyed();
 
@@ -75,10 +107,15 @@ export class FiniteStateMachine<StateType extends defined, EventType extends def
 			throw `Invalid event '${event}' while in state '${this.currentState}'`;
 		}
 
-		const oldState = this.currentState;
-		this.currentState = newState;
+		if (newState.guard !== undefined && !newState.guard()) {
+			throw `Invalid event '${event}' while in state '${this.currentState}' due to guard condition not being met`;
+		}
 
-		this.stateChangedFireable.fire(newState, oldState, event);
+		const oldState = this.currentState;
+		this.currentState = newState.state;
+		this.currentStateData = this.stateData.get(newState.state)!;
+
+		this.stateChangedFireable.fire(newState.state, oldState, event);
 	}
 
 	private assertIsNotDestroyed() {
