@@ -1,7 +1,7 @@
 {
-  "name": "@rbxts/finite-state-machine",
+  "name": "@rbxts/finite-state-machine-2",
   "version": "1.0.11",
-  "description": "A simple Finite State Machine implementation for Roblox development written using roblox-ts.",
+  "description": "Expands on the simple Finite State Machine written by Bytebit by adding guard statements, callback and state data storing. Written for roblox-ts.",
   "main": "out/init.lua",
   "scripts": {
     "build": "rbxtsc",
@@ -12,15 +12,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Bytebit-Org/roblox-FiniteStateMachine.git"
+    "url": "git+https://github.com/MorganDilling/roblox-FiniteStateMachine.git"
   },
   "keywords": [],
   "author": "",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Bytebit-Org/roblox-FiniteStateMachine/issues"
+    "url": "https://github.com/MorganDilling/roblox-FiniteStateMachine/issues"
   },
-  "homepage": "https://github.com/Bytebit-Org/roblox-FiniteStateMachine#readme",
+  "homepage": "https://github.com/MorganDilling/roblox-FiniteStateMachine#readme",
   "types": "out/index.d.ts",
   "files": [
     "out"
