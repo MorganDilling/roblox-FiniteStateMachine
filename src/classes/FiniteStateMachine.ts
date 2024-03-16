@@ -3,11 +3,11 @@ import { IReadOnlySignal, ISignal } from "@rbxts/signals-tooling";
 import { SignalFactory } from "factories/SignalFactory";
 import { IReadonlyFiniteStateMachine } from "interfaces/IReadonlyFiniteStateMachine";
 
-type GuardType = () => boolean;
+export type GuardType<Data> = (stateData: Data) => boolean;
 
-type TransitionData<StateType> = {
+export type TransitionData<StateType, Data> = {
 	state: StateType;
-	guard: GuardType;
+	guard: GuardType<Data>;
 };
 
 function convertTupleKeysToNestedMap<K1, K2, V>(
@@ -36,7 +36,7 @@ export class FiniteStateMachine<StateType extends defined, EventType extends def
 	private readonly stateChangedFireable: ISignal<
 		(newState: StateType, oldState: StateType, event: EventType) => void
 	>;
-	private readonly stateTransitions: ReadonlyMap<StateType, ReadonlyMap<EventType, TransitionData<StateType>>>;
+	private readonly stateTransitions: ReadonlyMap<StateType, ReadonlyMap<EventType, TransitionData<StateType, Data>>>;
 
 	private currentState: StateType;
 	private currentStateData: Data;
@@ -44,7 +44,8 @@ export class FiniteStateMachine<StateType extends defined, EventType extends def
 	protected constructor(
 		initialState: StateType,
 		signalFactory: SignalFactory,
-		tupleKeyStateTransitions: ReadonlyMap<[StateType, EventType], TransitionData<StateType>>,
+		// [fromState, event], { toState, guard }
+		tupleKeyStateTransitions: ReadonlyMap<[StateType, EventType], TransitionData<StateType, Data>>,
 		private stateData: ReadonlyMap<StateType, Data>,
 	) {
 		this.bin = new Bin();
@@ -67,7 +68,7 @@ export class FiniteStateMachine<StateType extends defined, EventType extends def
 		Data extends defined,
 	>(
 		initialState: StateType,
-		stateTransitions: ReadonlyMap<[StateType, EventType], TransitionData<StateType>>,
+		stateTransitions: ReadonlyMap<[StateType, EventType], TransitionData<StateType, Data>>,
 		stateData: ReadonlyMap<StateType, Data>,
 	) {
 		return new FiniteStateMachine(initialState, new SignalFactory(), stateTransitions, stateData);
@@ -107,7 +108,7 @@ export class FiniteStateMachine<StateType extends defined, EventType extends def
 			throw `Invalid event '${event}' while in state '${this.currentState}'`;
 		}
 
-		if (newState.guard !== undefined && !newState.guard()) {
+		if (newState.guard !== undefined && !newState.guard(this.currentStateData)) {
 			throw `Invalid event '${event}' while in state '${this.currentState}' due to guard condition not being met`;
 		}
 

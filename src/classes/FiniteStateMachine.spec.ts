@@ -5,35 +5,54 @@
 import fitumi from "@rbxts/fitumi";
 import { a } from "@rbxts/fitumi";
 import { SignalFactory } from "factories/SignalFactory";
-import { FiniteStateMachine } from "./FiniteStateMachine";
+import { FiniteStateMachine, TransitionData, GuardType } from "./FiniteStateMachine";
 
 type StateType = "A" | "B" | "C";
 type EventType = "A-B" | "A-C" | "B-C" | "C-A" | "Loop";
 
+type AData = {
+	foo: string;
+};
+
+type BData = {
+	bar: number;
+};
+
+type CData = {
+	baz: boolean;
+};
+
+type Data = AData | BData | CData;
+
 const ALL_STATES: ReadonlyArray<StateType> = ["A", "B", "C"];
 
-const DEFAULT_STATE_TRANSITIONS: ReadonlyMap<[StateType, EventType], StateType> = new Map([
-	[["A", "A-B"], "B"],
-	[["A", "A-C"], "C"],
-	[["A", "Loop"], "A"],
-	[["B", "B-C"], "C"],
-	[["B", "Loop"], "B"],
-	[["C", "C-A"], "A"],
-	[["C", "Loop"], "C"],
+const DEFAULT_STATE_TRANSITIONS = new Map([
+	[["A", "A-B"], { state: "B", guard: (data: AData) => data.foo === "foo" }],
+	[["A", "A-C"], { state: "C", guard: (data: AData) => data.foo === "foo" }],
+	[["A", "Loop"], { state: "A", guard: (data: AData) => data.foo === "foo" }],
+	[["B", "B-C"], { state: "C", guard: (data: BData) => data.bar === 42 }],
+	[["B", "Loop"], { state: "B", guard: (data: BData) => data.bar === 42 }],
+	[["C", "C-A"], { state: "A", guard: (data: CData) => data.baz === true }],
+	[["C", "Loop"], { state: "C", guard: (data: CData) => data.baz === true }],
 ]);
 
-class UnitTestableFiniteStateMachine extends FiniteStateMachine<StateType, EventType> {
+class UnitTestableFiniteStateMachine extends FiniteStateMachine<StateType, EventType, Data> {
 	public constructor(
 		args?: Partial<{
 			currentState: StateType;
 			signalFactory: SignalFactory;
-			tupleKeyStateTransitions: ReadonlyMap<[StateType, EventType], StateType>;
+			tupleKeyStateTransitions: ReadonlyMap<[StateType, EventType], TransitionData<StateType, Data>>;
 		}>,
 	) {
 		super(
 			args?.currentState ?? "A",
 			args?.signalFactory ?? new SignalFactory(),
 			args?.tupleKeyStateTransitions ?? DEFAULT_STATE_TRANSITIONS,
+			new Map([
+				["A", { foo: "foo" }],
+				["B", { bar: 42 }],
+				["C", { baz: true }],
+			]),
 		);
 	}
 }
