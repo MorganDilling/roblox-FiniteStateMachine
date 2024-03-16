@@ -1,6 +1,6 @@
 # Finite State Machine
 
-Expands on the simple Finite State Machine written by Bytebit. Contributions by Morgan Dilling add guard statements, callback and state data storing.
+Expands on the simple Finite State Machine written by Bytebit. Written for roblox-ts. Contributions by Morgan Dilling add guard statements, callback and state data storing.
 
 ## Installation
 ### roblox-ts
