@@ -39,11 +39,14 @@ Take this on/off switch as an example:
 ```ts
 type StateType = "On" | "Off";
 type EventType = "Toggle";
-const stateTransitions = new Map<[StateType, EventType], StateType>([
-	[["Off", "Toggle"], "On"],
-	[["On", "Toggle"], "Off"]
+const stateTransitions = new Map<[StateType, EventType], TransitionData<StateType, Data>>([
+	[["Off", "Toggle"], { state: "On", guard: (data: Data) => {}}],
+	[["On", "Toggle"], { state: "Off", guard: (data: Data) => {}}]
 ]);
-const fsm = FiniteStateMachine.create("Off", stateTransitions);
+const fsm = FiniteStateMachine.create("Off", stateTransitions, new Map<StateType, Data>([
+  ["On", { status: "On" }],
+  ["Off", { status: "Off" }]
+]));
 ```
 
 #### destroy Method
