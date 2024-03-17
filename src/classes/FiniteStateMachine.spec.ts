@@ -26,7 +26,10 @@ type Data = AData | BData | CData;
 
 const ALL_STATES: ReadonlyArray<StateType> = ["A", "B", "C"];
 
-const DEFAULT_STATE_TRANSITIONS = new Map([
+const DEFAULT_STATE_TRANSITIONS: ReadonlyMap<[StateType, EventType], TransitionData<StateType, Data>> = new Map<
+	[StateType, EventType],
+	TransitionData<StateType, Data>
+>([
 	[["A", "A-B"], { state: "B", guard: (data: AData) => data.foo === "foo" }],
 	[["A", "A-C"], { state: "C", guard: (data: AData) => data.foo === "foo" }],
 	[["A", "Loop"], { state: "A", guard: (data: AData) => data.foo === "foo" }],
